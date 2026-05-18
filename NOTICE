@@ -1,0 +1,18 @@
+stockheartbeat-mcp
+Copyright 2026 StockHeartbeat contributors
+
+This product includes software developed by the StockHeartbeat project
+(https://github.com/stockheartbeat).
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file in the project root for the full license text.
+
+----------------------------------------------------------------------
+Data source attribution
+----------------------------------------------------------------------
+- BTCUSDT market data fixtures in fixtures/ are synthetic samples and
+  do not represent any specific exchange feed.
+- When this server is configured to read live data, the upstream may
+  include public exchange feeds (e.g. Binance public WebSocket). Users
+  are responsible for complying with the upstream provider's terms of
+  use when redistributing derived data.

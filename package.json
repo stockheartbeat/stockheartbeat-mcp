@@ -1,0 +1,64 @@
+{
+  "name": "@stockheartbeat/mcp",
+  "version": "0.1.0",
+  "description": "Agent-readable market heartbeat over MCP. Dollar-notional bucket events for BTCUSDT, designed for AI agents to read and explain (not for trading signals).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": false,
+  "bin": {
+    "heartbeat-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist/",
+    "fixtures/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "agent",
+    "ai",
+    "market-data",
+    "heartbeat",
+    "dollar-bar",
+    "btcusdt",
+    "stockheartbeat"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stockheartbeat/stockheartbeat-mcp.git"
+  },
+  "homepage": "https://github.com/stockheartbeat/stockheartbeat-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/stockheartbeat/stockheartbeat-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

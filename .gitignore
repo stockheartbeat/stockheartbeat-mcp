@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.cache/
+*.log
+.DS_Store
+
+# env / local overrides
+.env
+.env.*
+!.env.example
+
+# editor / OS
+.vscode/
+.idea/
+
+# test artifacts
+coverage/
