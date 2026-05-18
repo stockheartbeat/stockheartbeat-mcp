@@ -8,6 +8,8 @@ dist/
 .env
 .env.*
 !.env.example
+# Project-local npm config (registry / auth) is per-machine; do not commit.
+.npmrc
 
 # editor / OS
 .vscode/

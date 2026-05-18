@@ -1,5 +1,9 @@
 # stockheartbeat-mcp
 
+[![npm version](https://img.shields.io/npm/v/@stockheartbeat/mcp.svg?logo=npm)](https://www.npmjs.com/package/@stockheartbeat/mcp)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
+
 > Agent-readable market heartbeat over MCP.
 > Dollar-notional bucket events for BTCUSDT, designed for AI agents to read
 > and explain. Not for trading signals.
@@ -14,7 +18,11 @@ and exercise the tools end-to-end without any backend.
 
 ## Quickstart
 
-### Cursor (once published to npm)
+The package is published to npm as
+[`@stockheartbeat/mcp`](https://www.npmjs.com/package/@stockheartbeat/mcp).
+No global install is needed; `npx` will fetch and run it on demand.
+
+### Cursor
 
 Add the snippet from [`examples/cursor.json`](examples/cursor.json) to your
 Cursor MCP config:
@@ -30,12 +38,14 @@ Cursor MCP config:
 }
 ```
 
-### Claude Desktop (once published to npm)
+### Claude Desktop
 
 Same shape, in `claude_desktop_config.json` (see
 [`examples/claude_desktop.json`](examples/claude_desktop.json)).
 
-### Run from source (always works, no npm publish required)
+Then open a new chat and try a prompt from [`examples/prompts.md`](examples/prompts.md).
+
+### Run from source (optional)
 
 ```bash
 git clone https://github.com/stockheartbeat/stockheartbeat-mcp.git
@@ -44,7 +54,7 @@ npm install
 npm run build
 ```
 
-Then point your MCP client at the built entry point:
+Then point your MCP client at the built entry:
 
 ```json
 {
@@ -56,8 +66,6 @@ Then point your MCP client at the built entry point:
   }
 }
 ```
-
-Then open a new chat and try a prompt from [`examples/prompts.md`](examples/prompts.md).
 
 ## Tools
 
