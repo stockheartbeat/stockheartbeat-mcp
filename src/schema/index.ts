@@ -1,16 +1,31 @@
+/**
+ * Canonical market schemas live in @stockheartbeat/core.
+ * This module re-exports them and adds MCP-only fixture validation.
+ */
 export {
+  AttestationSchema,
+  AttestationFieldsSchema,
   BucketSchema,
   WindowSummarySchema,
-  FixtureFileSchema,
-  NotableEventSchema,
   ActivityRegimeSchema,
   VwapTrendSchema,
-} from "./heartbeat.js";
+  NotableEventSchema,
+  TradeSchema,
+  ManifestSchema,
+  SCHEMA_VERSION,
+  FEATURE_SET,
+} from "@stockheartbeat/core/schema";
+
 export type {
+  Attestation,
   Bucket,
   WindowSummary,
-  FixtureFile,
   ActivityRegime,
-} from "./heartbeat.js";
-export { AttestationSchema, AttestationFieldsSchema } from "./attestation.js";
-export type { Attestation } from "./attestation.js";
+  VwapTrend,
+  NotableEvent,
+  Trade,
+  Manifest,
+} from "@stockheartbeat/core/schema";
+
+export { FixtureFileSchema } from "./fixture.js";
+export type { FixtureFile } from "./fixture.js";

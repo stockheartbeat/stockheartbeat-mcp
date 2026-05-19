@@ -9,6 +9,7 @@ export default defineConfig({
   sourcemap: true,
   splitting: false,
   shims: false,
+  external: ["@stockheartbeat/core"],
   banner: {
     js: "#!/usr/bin/env node",
   },

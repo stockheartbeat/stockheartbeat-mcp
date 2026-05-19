@@ -8,8 +8,8 @@ dist/
 .env
 .env.*
 !.env.example
-# Project-local npm config (registry / auth) is per-machine; do not commit.
-.npmrc
+# Do not commit machine-local auth tokens. Scoped registry for @stockheartbeat is in .npmrc.
+# If you add _authToken to .npmrc locally, use `git update-index --skip-worktree .npmrc`.
 
 # editor / OS
 .vscode/
