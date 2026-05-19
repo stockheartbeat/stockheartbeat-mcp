@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@stockheartbeat/core": "file:../../../../tmp/stockheartbeat-core-0.1.0.tgz",
+    "@stockheartbeat/core": "^0.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
