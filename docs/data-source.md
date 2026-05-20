@@ -15,8 +15,8 @@ This indirection means the MCP tool layer never changes when we swap sources.
 | Source            | Status      | When to use                                              |
 |-------------------|-------------|----------------------------------------------------------|
 | `mockSource`      | Shipped     | Offline development, demos, CI. Default for v0.1.        |
-| `restSource`      | Reserved    | Will read the public StockHeartbeat REST API once ready. |
-| `binanceSource`   | Reserved    | Will subscribe to Binance public WS and aggregate locally. |
+| `restSource`      | Shipped (Phase 0) | Reads live data from `mcp-host` HTTP API on VPS/Mac. |
+| `binanceSource`   | Reserved (v0.3)   | Will subscribe to Binance public WS and aggregate in-process. |
 
 ### `mockSource` (v0.1)
 
@@ -31,21 +31,24 @@ Override the fixture path:
 HEARTBEAT_FIXTURE_PATH=/path/to/your.json npx -y @stockheartbeat/mcp
 ```
 
-### `restSource` (planned)
+### `restSource` (Phase 0)
 
-Once the upstream StockHeartbeat service exposes a read-only REST API
-(see the project roadmap), this source will call endpoints in the shape of:
+Calls the `mcp-host` HTTP API (see `micro` repo `src/mcp-host.mjs`):
 
 ```
-GET {HEARTBEAT_API_BASE}/api/v1/heartbeat/current?symbol=BTCUSDT
-GET {HEARTBEAT_API_BASE}/api/v1/heartbeat/recent?symbol=BTCUSDT&limit=20
-GET {HEARTBEAT_API_BASE}/api/v1/summary?symbol=BTCUSDT&window=5m
+GET  {HEARTBEAT_API_BASE}/v1/heartbeat/current?symbol=BTCUSDT
+GET  {HEARTBEAT_API_BASE}/v1/heartbeat/recent?symbol=BTCUSDT&limit=20
+GET  {HEARTBEAT_API_BASE}/v1/summary?symbol=BTCUSDT&window=5m
+POST {HEARTBEAT_API_BASE}/v1/summarize  { "symbol": "BTCUSDT", "window": "5m" }
 ```
 
-The tool layer will not change. Selection will be controlled via:
+Selection:
 
 ```bash
-HEARTBEAT_SOURCE=rest HEARTBEAT_API_BASE=https://api.example.com npx -y @stockheartbeat/mcp
+HEARTBEAT_SOURCE=rest \
+HEARTBEAT_API_BASE=https://api.stockheartbeat.com \
+HEARTBEAT_API_KEY=your-pilot-key \
+npx -y @stockheartbeat/mcp
 ```
 
 ### `binanceSource` (planned)
@@ -54,12 +57,10 @@ For self-contained demos without any backend. The MCP process will connect to
 a public Binance spot trade stream and aggregate dollar-notional buckets
 in-memory using the same threshold semantics as the upstream service.
 
-## Selection precedence (future)
+## Selection precedence
 
-The startup script will pick a source by the first match:
+1. `HEARTBEAT_SOURCE=rest` or `mock`
+2. If unset and `HEARTBEAT_API_BASE` is set -> `rest`
+3. Default -> `mock` (CI and offline demos)
 
-1. `HEARTBEAT_SOURCE` env var, if set (`mock` | `rest` | `binance`).
-2. `HEARTBEAT_API_BASE` present -> `rest`.
-3. Default -> `mock`.
-
-v0.1 only honours `HEARTBEAT_FIXTURE_PATH`; the other variables are reserved.
+`HEARTBEAT_FIXTURE_PATH` only applies to `mock`.

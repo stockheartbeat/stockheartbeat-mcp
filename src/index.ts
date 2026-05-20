@@ -1,6 +1,6 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { buildServer } from "./server.js";
-import { createMockSource } from "./sources/mockSource.js";
+import { selectDataSource } from "./lib/selectSource.js";
 import { SERVER_NAME, SERVER_VERSION } from "./lib/version.js";
 
 /**
@@ -9,7 +9,7 @@ import { SERVER_NAME, SERVER_VERSION } from "./lib/version.js";
  */
 async function main(): Promise<void> {
   const fixturePath = process.env.HEARTBEAT_FIXTURE_PATH;
-  const source = createMockSource(fixturePath);
+  const source = selectDataSource({ fixturePath });
   const symbols = await source.listSymbols();
   const windows = source.supportedWindows();
 
