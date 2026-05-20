@@ -1,0 +1,32 @@
+# StockHeartbeat — Cursor Agent ignore (stockheartbeat-mcp)
+# Hides paths from @-mention, codebase index, and default Agent context.
+# Not a filesystem sandbox: absolute-path reads outside the repo may still work.
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.npmrc.local
+
+# --- Dependencies & build output ---
+node_modules/
+dist/
+coverage/
+out/
+tmp/
+.cache/
+
+# --- Logs ---
+*.log
+
+# --- OS / local editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
