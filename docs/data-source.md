@@ -40,7 +40,15 @@ GET  {HEARTBEAT_API_BASE}/v1/heartbeat/current?symbol=BTCUSDT
 GET  {HEARTBEAT_API_BASE}/v1/heartbeat/recent?symbol=BTCUSDT&limit=20
 GET  {HEARTBEAT_API_BASE}/v1/summary?symbol=BTCUSDT&window=5m
 POST {HEARTBEAT_API_BASE}/v1/summarize  { "symbol": "BTCUSDT", "window": "5m" }
+POST {HEARTBEAT_API_BASE}/v1/descriptive/commit   (Phase 1, auth required)
+GET  {HEARTBEAT_API_BASE}/v1/descriptive/leaderboard
+GET  {HEARTBEAT_API_BASE}/v1/agents/{agent_id}/track_record
+GET  {HEARTBEAT_API_BASE}/v1/narrative/latest?symbol=BTCUSDT&window=5m  (public, no key)
 ```
+
+Phase 1 descriptive tools (`commit_descriptive`, `get_agent_track_record`) call these
+endpoints via [`src/lib/heartbeatApi.ts`](../src/lib/heartbeatApi.ts). **MCP never
+connects to the descriptive JSONL store directly** — HTTP only.
 
 Selection:
 
