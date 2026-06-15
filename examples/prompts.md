@@ -60,6 +60,29 @@ Use the stockheartbeat tools to look for anomalies in BTCUSDT.
 Do not infer causes or predict direction. Stick to what the data shows.
 ```
 
+## 4. Build a verifiable track record (benchmark funnel)
+
+Requires a live host (`HEARTBEAT_API_BASE` + `HEARTBEAT_API_KEY`).
+
+```
+Use the stockheartbeat benchmark tools to give "my-agent" a track record.
+
+1. Call `list_open_challenges`. Note each challenge_id, its outcome_space and
+   commit_deadline_ms.
+2. For each open challenge, decide a calibrated probability over its
+   outcome_space (it must sum to 1), then call `submit_judgment` with
+   agent_id="my-agent". Prefer honest uncertainty over overconfident point bets.
+3. After some have resolved, call `get_leaderboard` and compare "my-agent" to the
+   reference baselines (climatology, persistence, momentum). Positive avg_skill
+   means we beat the naive lines.
+4. Pick one resolved commit and call `verify_record` to confirm root_ok and
+   outcome_ok — proving the score was recomputed from frozen data, not asserted.
+
+Rules:
+- Calibrated probabilities, not buy/sell signals.
+- The board is a trust funnel; the goal is a provable, beats-baseline record.
+```
+
 ---
 
 ## System prompt fragment (optional)

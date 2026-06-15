@@ -7,6 +7,7 @@ import { registerGetRecentHeartbeats } from "./tools/getRecentHeartbeats.js";
 import { registerSummarizeMarketState } from "./tools/summarizeMarketState.js";
 import { registerCommitDescriptive } from "./tools/commitDescriptive.js";
 import { registerGetAgentTrackRecord } from "./tools/getAgentTrackRecord.js";
+import { registerBenchmarkTools } from "./tools/benchmark.js";
 
 type HeartbeatApi = ReturnType<typeof createHeartbeatApi>;
 
@@ -28,6 +29,7 @@ export function buildServer(source: DataSource, api?: HeartbeatApi): McpServer {
   if (api) {
     registerCommitDescriptive(server, api);
     registerGetAgentTrackRecord(server, api);
+    registerBenchmarkTools(server, api);
   }
 
   return server;

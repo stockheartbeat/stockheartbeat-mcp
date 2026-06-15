@@ -30,7 +30,9 @@ async function main(): Promise<void> {
   await server.connect(transport);
 
   const toolList = api
-    ? "get_current_heartbeat, get_recent_heartbeats, summarize_market_state, commit_descriptive, get_agent_track_record"
+    ? "get_current_heartbeat, get_recent_heartbeats, summarize_market_state, " +
+      "commit_descriptive, get_agent_track_record, list_open_challenges, " +
+      "submit_judgment, get_leaderboard, verify_record"
     : "get_current_heartbeat, get_recent_heartbeats, summarize_market_state";
 
   process.stderr.write(`[${SERVER_NAME}] ready on stdio. Tools: ${toolList}.\n`);

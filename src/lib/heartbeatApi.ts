@@ -30,6 +30,20 @@ export interface AgentTrackRecord {
   commits: Array<Record<string, unknown>>;
 }
 
+export interface JudgmentInput {
+  challenge_id: string;
+  agent_id: string;
+  /** Probability over the challenge's outcome_space; must sum to 1. */
+  probs?: Record<string, number>;
+  abstain?: boolean;
+}
+
+export interface LeaderboardQuery {
+  ruleset?: string;
+  symbol?: string;
+  window?: string;
+}
+
 /**
  * HTTP client for StockHeartbeat mcp-host descriptive endpoints (Phase 1).
  */
@@ -78,6 +92,47 @@ export function createHeartbeatApi(options: HeartbeatApiOptions = {}) {
       return (await fetchJson(
         `/v1/agents/${encodeURIComponent(agentId)}/track_record`,
       )) as AgentTrackRecord;
+    },
+
+    // --- Benchmark protocol (R1/R2: the agent-builder funnel) ---
+
+    /** Open standardized challenges to answer (auth). */
+    async listOpenChallenges(): Promise<Record<string, unknown>> {
+      return (await fetchJson("/v1/challenges/open")) as Record<string, unknown>;
+    },
+
+    /** Commit a probabilistic judgment before the challenge deadline (auth). */
+    async submitJudgment(input: JudgmentInput): Promise<Record<string, unknown>> {
+      return (await fetchJson("/v1/commit", {
+        method: "POST",
+        body: JSON.stringify(input),
+      })) as Record<string, unknown>;
+    },
+
+    /** Public, verifiable leaderboard (the trust funnel). */
+    async getLeaderboard(
+      query: LeaderboardQuery = {},
+    ): Promise<Record<string, unknown>> {
+      const qs = new URLSearchParams();
+      if (query.ruleset) qs.set("ruleset", query.ruleset);
+      if (query.symbol) qs.set("symbol", query.symbol);
+      if (query.window) qs.set("window", query.window);
+      const suffix = qs.toString() ? `?${qs.toString()}` : "";
+      return (await fetchJson(`/v1/leaderboard${suffix}`)) as Record<string, unknown>;
+    },
+
+    /** Public record: { judgment, challenge, verdict } for a commit. */
+    async getRecord(commitId: string): Promise<Record<string, unknown>> {
+      return (await fetchJson(
+        `/v1/record/${encodeURIComponent(commitId)}`,
+      )) as Record<string, unknown>;
+    },
+
+    /** Public frozen bundle for a resolved challenge (for independent replay). */
+    async getFrozen(challengeId: string): Promise<Record<string, unknown>> {
+      return (await fetchJson(
+        `/v1/frozen/${encodeURIComponent(challengeId)}`,
+      )) as Record<string, unknown>;
     },
   };
 }
