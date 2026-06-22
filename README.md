@@ -1,31 +1,128 @@
-# stockheartbeat-mcp
+# @stockheartbeat/mcp
 
-[![npm version](https://img.shields.io/npm/v/@stockheartbeat/mcp.svg?logo=npm)](https://www.npmjs.com/package/@stockheartbeat/mcp)
+[![npm](https://img.shields.io/npm/v/@stockheartbeat/mcp.svg)](https://www.npmjs.com/package/@stockheartbeat/mcp)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 
-> Agent-readable market heartbeat over MCP.
-> Dollar-notional bucket events for BTCUSDT, designed for AI agents to read
-> and explain. Not for trading signals.
+**MCP server for agent builders:** read live dollar-notional heartbeats, commit benchmark judgments, verify scores locally.
 
-`stockheartbeat-mcp` is a minimal [Model Context Protocol](https://modelcontextprotocol.io)
-server that lets any MCP-enabled client (Cursor, Claude Desktop, and others)
-read a structured stream of market "heartbeats" — closed dollar-notional
-buckets — and ask an LLM to explain the current state in plain language.
+- **Product:** hosted eval (API + these tools) — [get a key](https://www.stockheartbeat.com/benchmark#register)
+- **Public leaderboard:** trust funnel only (replayable scores, not the paid product)
+- **Not financial advice.** No buy/sell signals.
 
-v0.1 ships with an **offline mock data source** so you can wire up a client
-and exercise the tools end-to-end without any backend.
+Requires **Node ≥ 20**.
 
-## Quickstart
+---
 
-The package is published to npm as
-[`@stockheartbeat/mcp`](https://www.npmjs.com/package/@stockheartbeat/mcp).
-No global install is needed; `npx` will fetch and run it on demand.
+## Quickstart (live)
 
-### Cursor
+```json
+{
+  "mcpServers": {
+    "stockheartbeat": {
+      "command": "npx",
+      "args": ["-y", "@stockheartbeat/mcp"],
+      "env": {
+        "HEARTBEAT_API_BASE": "https://www.stockheartbeat.com",
+        "HEARTBEAT_API_KEY": "your_key_here"
+      }
+    }
+  }
+}
+```
 
-Add the snippet from [`examples/cursor.json`](examples/cursor.json) to your
-Cursor MCP config:
+Get a key: <https://www.stockheartbeat.com/benchmark#register>
+
+Copy-paste configs: [`examples/cursor.json`](examples/cursor.json), [`examples/claude_desktop.json`](examples/claude_desktop.json)
+
+Example agent prompts: [`examples/prompts.md`](examples/prompts.md)
+
+---
+
+## Tools
+
+### Always available (heartbeat read)
+
+| Tool | What it returns |
+|------|-----------------|
+| `get_current_heartbeat` | Latest closed bucket (OHLC, VWAP, notional, imbalance, …) |
+| `get_recent_heartbeats` | Last N buckets, oldest first |
+| `summarize_market_state` | Rolling window summary (regime, HBPM, volatility, …) |
+
+With **`HEARTBEAT_API_BASE` set**, heartbeat tools use the **REST data source** (live BTCUSDT on the hosted stack). Without it, they use an **offline mock fixture** ([`fixtures/btcusdt.json`](fixtures/btcusdt.json)).
+
+### Benchmark eval (requires `HEARTBEAT_API_BASE` + `HEARTBEAT_API_KEY`)
+
+| Tool | What it does |
+|------|----------------|
+| `list_open_challenges` | Open challenges: type, symbol, window, outcome space, `commit_deadline_ms`, `ruleset_hash` |
+| `submit_judgment` | Post probabilities before deadline; server stamps `context_snapshot_hash` + `data_root` |
+| `get_leaderboard` | Skill vs baselines (climatology / persistence / momentum); includes trust-funnel positioning |
+| `verify_record` | **Local recompute:** `root_ok` + `outcome_ok` via `@stockheartbeat/core/benchmark` — no trust in our server |
+
+Challenge types include `regime_next`, `hbpm_below_median_next`, `direction_next`, `vol_regime_next`.
+
+Flow: **pose → commit → resolve → score → verify**. Late commits → **409**. Scores = proper rules (Brier / log), not hit-rate.
+
+Details: [`docs/tools.md`](docs/tools.md) · scoring walkthrough: <https://www.stockheartbeat.com/benchmark#how>
+
+### Also registered when API is on (legacy descriptive track)
+
+| Tool | Notes |
+|------|--------|
+| `commit_descriptive` | Free-form descriptive claims (separate from benchmark grid) |
+| `get_agent_track_record` | Resolved descriptive commits for one `agent_id` |
+
+Benchmark eval is the supported path for new agents.
+
+---
+
+## Verify without trusting us
+
+```bash
+npm i @stockheartbeat/core
+```
+
+```ts
+import {
+  resolveChallenge,
+  merkleLeaf,
+  buildMerkleTree,
+} from "@stockheartbeat/core/benchmark";
+
+// frozen bundle from GET /v1/frozen/:challenge_id
+const root = buildMerkleTree(frozen.resolve_buckets.map(merkleLeaf)).root;
+const out = resolveChallenge({
+  challenge: frozen.challenge,
+  resolveBuckets: frozen.resolve_buckets,
+  lookbackBuckets: frozen.lookback_buckets ?? [],
+});
+// root === frozen.data_root && out.outcome === frozen.resolved_outcome
+```
+
+Or call MCP `verify_record` with a `commit_id`.
+
+---
+
+## Environment
+
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `HEARTBEAT_API_BASE` | For live + benchmark | — | API origin, e.g. `https://www.stockheartbeat.com` |
+| `HEARTBEAT_API_KEY` | For benchmark writes | — | Bearer token for `/v1/commit`, challenges |
+| `HEARTBEAT_SOURCE` | No | `mock` if no base URL | `mock` \| `rest` |
+| `HEARTBEAT_FIXTURE_PATH` | No | bundled fixture | Override mock JSON |
+
+**Public (no key):** `GET /v1/leaderboard`, `GET /v1/frozen/:id`  
+**Auth required:** `GET /v1/challenges/open`, `POST /v1/commit`
+
+Setting `HEARTBEAT_API_BASE` enables REST heartbeats **and** registers benchmark + descriptive tools.
+
+---
+
+## Mock-only mode
+
+Omit `HEARTBEAT_API_BASE` — three read tools only, synthetic data:
 
 ```json
 {
@@ -38,164 +135,53 @@ Cursor MCP config:
 }
 ```
 
-### Claude Desktop
+Good for wiring MCP; not real market data.
 
-Same shape, in `claude_desktop_config.json` (see
-[`examples/claude_desktop.json`](examples/claude_desktop.json)).
+---
 
-Then open a new chat and try a prompt from [`examples/prompts.md`](examples/prompts.md).
-
-### Run from source (optional)
+## Development
 
 ```bash
 git clone https://github.com/stockheartbeat/stockheartbeat-mcp.git
 cd stockheartbeat-mcp
 npm install
 npm run build
-```
-
-Then point your MCP client at the built entry:
-
-```json
-{
-  "mcpServers": {
-    "stockheartbeat": {
-      "command": "node",
-      "args": ["/absolute/path/to/stockheartbeat-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-## Tools
-
-| Tool                       | Returns                                                                |
-|----------------------------|------------------------------------------------------------------------|
-| `get_current_heartbeat`    | The most recently closed dollar-notional bucket.                       |
-| `get_recent_heartbeats`    | The most recent N closed buckets, oldest first.                        |
-| `summarize_market_state`   | Rolling window summary (HBPM, regime, volatility, imbalance, events).  |
-
-The next four tools appear only when the server is pointed at a live host
-(`HEARTBEAT_API_BASE`) and form the **benchmark funnel** (see below):
-
-| Tool                       | Returns                                                                |
-|----------------------------|------------------------------------------------------------------------|
-| `list_open_challenges`     | Open standardized challenges + outcome spaces + deadlines + ruleset_hash. |
-| `submit_judgment`          | Commits your agent's probabilities before the deadline (the product).  |
-| `get_leaderboard`          | Public, verifiable ranking by skill vs naive baselines (trust funnel). |
-| `verify_record`            | Re-derives any score **locally** (root_ok / outcome_ok), zero trust.   |
-
-Full input/output shapes are in [`docs/tools.md`](docs/tools.md).
-
-## Benchmark — a verifiable track record for your agent
-
-If you **build or employ a market-judgment agent**, the hard part isn't getting
-a prediction — it's *proving the track record is real*. The StockHeartbeat
-Benchmark gives your agent a neutral, unfakeable record:
-
-1. The protocol **poses** standardized challenges (symbol × window × type),
-   including tradeable domains — short-horizon **direction** (`up`/`down`) and
-   **volatility regime** (`high`/`low`) — so nobody cherry-picks easy questions.
-2. Your agent **commits** a probability distribution *before* the deadline
-   (`submit_judgment`). The commit is timestamped and snapshot-hashed; late
-   commits are rejected (no look-ahead).
-3. After the window closes, the outcome is **resolved deterministically from
-   frozen buckets** and scored with proper rules (Brier / log) — ranked by
-   **skill vs naive baselines**, not raw hit-rate.
-4. Anyone (including you) can **`verify_record`** to recompute the Merkle
-   `data_root` and re-run resolution locally with
-   [`@stockheartbeat/core/benchmark`](https://www.npmjs.com/package/@stockheartbeat/core).
-   Trust the math, not the server.
-
-Three reference baselines (climatology, persistence, momentum) are always on the
-board — beat them and your skill > 0 is provable.
-
-> The public leaderboard is a **trust funnel**, not the product. The product is
-> this hosted API + these MCP tools your agent commits answers through.
-
-### Connect to a live host
-
-```json
-{
-  "mcpServers": {
-    "stockheartbeat": {
-      "command": "npx",
-      "args": ["-y", "@stockheartbeat/mcp"],
-      "env": {
-        "HEARTBEAT_API_BASE": "https://api.stockheartbeat.com",
-        "HEARTBEAT_API_KEY": "sk_your_agent_key"
-      }
-    }
-  }
-}
-```
-
-Get a key at <https://www.stockheartbeat.com/benchmark#register>. Then ask your
-agent: *"List open challenges, commit a calibrated judgment to each as
-`my-agent`, then verify one of last hour's records."*
-
-## Data source
-
-v0.1 only ships `mockSource`, backed by a deterministic synthetic fixture in
-[`fixtures/btcusdt.json`](fixtures/btcusdt.json) (400 buckets, 5 × 5m
-summaries). It is **not** real exchange data.
-
-The `DataSource` interface (see
-[`src/sources/index.ts`](src/sources/index.ts)) reserves room for two future
-sources without changing the tool layer:
-
-- `restSource` — calls the upstream StockHeartbeat REST API.
-- `binanceSource` — subscribes to a public exchange feed and aggregates locally.
-
-See [`docs/data-source.md`](docs/data-source.md) for the planned switching
-mechanism.
-
-## Not financial advice
-
-Every tool description ends with:
-
-> Returns event-based market state, not financial advice. Heartbeat = dollar-notional bucket.
-
-Tools intentionally do not expose forecasts, buy/sell signals, or position
-sizing. The example prompts ask the model to use probabilistic, observational
-language.
-
-## Roadmap
-
-| Phase     | Scope                                                            | Status            |
-|-----------|------------------------------------------------------------------|-------------------|
-| v0.1      | Stdio MCP, three read-only tools, offline mock fixture.          | This release.     |
-| v0.2      | `restSource` against the public StockHeartbeat REST endpoints.   | Planned.          |
-| v0.3      | Benchmark funnel tools (`list_open_challenges`, `submit_judgment`, `get_leaderboard`, `verify_record`). | This release. |
-| v0.4      | `binanceSource` for self-contained live demos.                   | Planned.          |
-| v0.x+     | Hermes / OpenClaw adapters (see [`adapters/`](adapters/)).       | Planned.          |
-| Post-v0.x | Prediction-commit / attestation tools (see [`docs/attestation.md`](docs/attestation.md)). | Reserved, not implemented. |
-
-Reserved schema fields (`prediction_id`, `feature_snapshot_hash`, `agent_id`,
-`attestation`) are present today as forward-compatible placeholders. v0.1 does
-not implement signing or any chain interaction.
-
-## Development
-
-```bash
-npm install
-npm run build
 npm test
 node dist/index.js
 ```
 
-Regenerate the fixture (deterministic, seeded):
+Local host example:
 
 ```bash
-node scripts/build-fixture.mjs
+HEARTBEAT_API_BASE=http://127.0.0.1:8790 HEARTBEAT_API_KEY=dev_key node dist/index.js
 ```
+
+---
+
+## Related
+
+| Link | Role |
+|------|------|
+| <https://www.stockheartbeat.com/> | Product site + live demo |
+| <https://www.stockheartbeat.com/benchmark> | Trust funnel + API key signup |
+| <https://www.stockheartbeat.com/how-it-works.html> | How heartbeats work |
+| [`@stockheartbeat/core`](https://www.npmjs.com/package/@stockheartbeat/core) | Schemas + benchmark pure functions |
+| [`docs/data-source.md`](docs/data-source.md) | REST vs mock |
+| [`docs/attestation.md`](docs/attestation.md) | On-chain attestation (not implemented) |
+
+---
+
+## Status (v0.3.0)
+
+| Item | State |
+|------|--------|
+| Heartbeat read (mock + REST) | Shipped |
+| Benchmark MCP tools | Shipped |
+| Hosted eval + frozen replay | Live on stockheartbeat.com |
+| Next milestone | First external agent on the board ([M1](https://www.stockheartbeat.com/#roadmap)) |
+
+---
 
 ## License
 
-[Apache License 2.0](LICENSE). See [`NOTICE`](NOTICE) for attribution.
-
-## Contributing
-
-All repository content — code, comments, docs, examples, commit messages — is
-in English. Open an issue before sending a PR that changes schemas or adds an
-adapter.
+[Apache-2.0](LICENSE). Docs and commits in English. Open an issue before schema-breaking PRs.
